@@ -1,0 +1,71 @@
+---
+
+- name: Discovery Host...
+
+  hosts: localhost
+
+  connection: local
+
+ 
+
+  tasks:
+
+  - name: Collecting data.....
+
+    shell: "nmap -sn -oG - {{ scan_net }}"
+
+    vars:
+
+     scan_net: 192.168.100.0/24
+
+    register: data_input
+
+ 
+
+  - set_fact:
+
+     hostname: "{{ data_input.stdout | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}"
+
+    vars:
+
+     filter: '(?<=Host:).*'  
+
+ 
+
+  - name: Collect successful!!! Checking save file.....
+
+    find:
+
+     path: "/home/admin/Documents/hostname-collect.txt"
+
+    register: check_file
+
+ 
+
+  - name: File not existed! Creating file in dir /Documents.....
+
+    file:
+
+     path: /home/admin/Documents/hostname-collect.txt
+
+     state: touch
+
+     mode: 0755
+
+    when: check_file.matched == 0
+
+ 
+
+  - name: Complete Collection :D Checking file hostname-collect.txt
+
+    lineinfile:
+
+     path: "/home/admin/Documents/hostname-collect.txt"
+
+     line: "{{ item }}"
+
+     mode: 0775
+
+    with_items: "{{ hostname }}"
+
+...
